@@ -2,16 +2,16 @@ SET search_path TO pizza_runner;
 
 -- cleaning my tables
 update pizza_runner.customer_orders
-set extras=''
-where extras = 'null' or extras is null;
+set extras=null
+where extras = 'null' or extras ='';
 
 update pizza_runner.customer_orders
-set exclusions=''
-where exclusions = 'null' or exclusions is null;
+set exclusions=null
+where exclusions = 'null' or exclusions ='';
 
 update runner_orders
-set cancellation = ''
-where cancellation = 'null' or cancellation is null;
+set cancellation = null
+where cancellation = 'null' or cancellation = '';
 
 -- How many pizzas were ordered?
 select count(*)
