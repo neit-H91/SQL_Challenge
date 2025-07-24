@@ -87,8 +87,7 @@ from customer_orders c
 join pizza_names pn
 on c.pizza_id = pn.pizza_id
 join pizza_toppings pt
-on pt.topping_id = any(string_to_array(c.exclusions, ',')::int[])
-where c.pizza_id = 1 and order_id = 4;
+on pt.topping_id = any(string_to_array(c.exclusions, ',')::int[]);
 
 select
   c.order_id,
@@ -100,3 +99,11 @@ join pizza_names pn on c.pizza_id = pn.pizza_id
 join pizza_toppings pt on pt.topping_id = any(string_to_array(c.exclusions, ',')::int[])
 where c.order_id = 4 and c.pizza_id = 1
 group by c.order_id, c.pizza_id, pn.pizza_name;
+
+select order_id, co.pizza_id, exclusions, extras
+from customer_orders co
+join pizza_names pn
+on co.pizza_id = pn.pizza_id;
+
+select * from pizza_toppings
+where topping_id in (1,2,3)
