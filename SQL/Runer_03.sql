@@ -40,21 +40,29 @@ limit 1;
 -- Meat Lovers - Exclude Beef
 -- Meat Lovers - Extra Bacon
 -- Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers
-create or replace function desc_orders()
-	returns void
-	language plpgsql
-	as
-$$
-declare
-get_commands CURSOR FOR SELECT * FROM customer_orders;
-excludes text;
-extras text;
-get_excludes CURSOR FOR SELECT topping_name FROM pizza_toppings WHERE topping_id = ANY(string_to_array(excludes, ',')::int[]);
+-- create or replace function desc_orders()
+-- 	returns void
+-- 	language plpgsql
+-- 	as
+-- $$
+-- declare
+-- get_commands CURSOR FOR SELECT * FROM customer_orders;
+-- get_excludes CURSOR FOR SELECT topping_name FROM pizza_toppings WHERE topping_id = ANY(string_to_array(excludes, ',')::int[]);
+-- get_extras CURSOR FOR SELECT topping_name FROM pizza_toppings WHERE topping_id = ANY(string_to_array(extras, ',')::int[]);
+-- pizza_name text;
+-- current_order_id INT;
+-- current_topping_id INT;
+-- begin
+-- 	open get_commands;
 
-begin
+-- 	loop
+-- 		fetch get_commands into current_order_id;
+-- 		exit when not found;
+-- 		select pizza_name from pizza_names join 
 
-end;
-$$;
+-- end;
+-- $$;
+select desc_pizza();
 
 select * 
 from customer_orders c
@@ -79,4 +87,16 @@ from customer_orders c
 join pizza_names pn
 on c.pizza_id = pn.pizza_id
 join pizza_toppings pt
-on pt.topping_id = any(string_to_array(c.exclusions, ',')::int[]);
+on pt.topping_id = any(string_to_array(c.exclusions, ',')::int[])
+where c.pizza_id = 1 and order_id = 4;
+
+select
+  c.order_id,
+  c.pizza_id,
+  pn.pizza_name,
+  string_agg(pt.topping_name, ', ') as excludes
+from customer_orders c
+join pizza_names pn on c.pizza_id = pn.pizza_id
+join pizza_toppings pt on pt.topping_id = any(string_to_array(c.exclusions, ',')::int[])
+where c.order_id = 4 and c.pizza_id = 1
+group by c.order_id, c.pizza_id, pn.pizza_name;
