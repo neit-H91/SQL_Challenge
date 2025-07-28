@@ -1,7 +1,6 @@
 SET search_path TO pizza_runner;
 
 
--- Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any relevant ingredients
 -- For example: "Meat Lovers: 2xBacon, Beef, ... , Salami"
 -- What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
 
@@ -40,29 +39,44 @@ limit 1;
 -- Meat Lovers - Exclude Beef
 -- Meat Lovers - Extra Bacon
 -- Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers
--- create or replace function desc_orders()
--- 	returns void
--- 	language plpgsql
--- 	as
--- $$
--- declare
--- get_commands CURSOR FOR SELECT * FROM customer_orders;
--- get_excludes CURSOR FOR SELECT topping_name FROM pizza_toppings WHERE topping_id = ANY(string_to_array(excludes, ',')::int[]);
--- get_extras CURSOR FOR SELECT topping_name FROM pizza_toppings WHERE topping_id = ANY(string_to_array(extras, ',')::int[]);
--- pizza_name text;
--- current_order_id INT;
--- current_topping_id INT;
--- begin
--- 	open get_commands;
 
--- 	loop
--- 		fetch get_commands into current_order_id;
--- 		exit when not found;
--- 		select pizza_name from pizza_names join 
+create or replace function describe_pizza_orders()
+returns void
+language plpgsql
+as
+$$
+declare
+get_orders cursor for select pizza_id, exclusions, extras from customer_orders;
+current_pid int;
+current_pizza_name text;
+current_exclude text;
+current_extra text;
+description text;
+topping_names text;
+begin
+open get_orders;
+loop 
+description := '';
+fetch get_orders into current_pid,current_exclude,current_extra;
+exit when not found;
+select pizza_name into current_pizza_name from pizza_names where pizza_id = current_pid;
+description := description || current_pizza_name;
+if current_exclude is not null then
+select string_agg(topping_name, ', ') into topping_names from pizza_toppings WHERE topping_id = ANY(string_to_array(current_exclude, ',')::int[]);
+description := description || ' Excludes ' || topping_names;
+end if;
+if current_extra is not null then
+select string_agg(topping_name, ', ') into topping_names from pizza_toppings WHERE topping_id = ANY(string_to_array(current_extra, ',')::int[]);
+description := description || ' Extras ' || topping_names;
+end if;
+raise notice '%', description;
+end loop;
+close get_orders;
+end;
+$$;
 
--- end;
--- $$;
-select desc_pizza();
+-- Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any relevant ingredients
+
 
 select * 
 from customer_orders c
@@ -106,4 +120,4 @@ join pizza_names pn
 on co.pizza_id = pn.pizza_id;
 
 select * from pizza_toppings
-where topping_id in (1,2,3)
+where topping_id in (1,2,3);
