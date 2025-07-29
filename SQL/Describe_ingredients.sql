@@ -45,3 +45,41 @@ begin
   close get_orders;
 end;
 $$;
+
+select order_id from customer_orders;
+
+select *
+from (
+  select 
+    string_to_array(concat_ws(',', toppings, extras),',') as ingredients,
+    exclusions
+  from customer_orders co
+  join pizza_recipes pr on pr.pizza_id = co.pizza_id
+  where order_id = 4
+) sub;
+
+select
+  co.order_id,
+  unnest(
+    string_to_array(concat_ws(',', toppings, extras),',')
+  ) as ingredient
+from customer_orders co
+join pizza_recipes pr on pr.pizza_id = co.pizza_id
+where co.order_id = 4;
+-- and not (
+--   unnest(
+--     string_to_array(concat_ws(',', toppings, extras),',')
+--   ) = any(string_to_array(co.exclusions, ','))
+-- )
+
+with test_ingredients as (
+	select
+	  co.order_id,
+	  array_agg(unnest_ingredients) as ingredients
+	from customer_orders co
+	join pizza_recipes pr on pr.pizza_id = co.pizza_id
+	cross join lateral unnest(
+	    string_to_array(concat_ws(',', pr.toppings, co.extras), ',')
+	) as t(unnest_ingredients)
+	group by co.order_id;
+)
