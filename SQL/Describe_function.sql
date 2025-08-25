@@ -1,5 +1,7 @@
 SET search_path TO pizza_runner;
 
+-- Generate an order item for each record in the customers_orders table in the format of one of the following:
+
 create or replace function describe_pizza_orders()
 returns void
 language plpgsql

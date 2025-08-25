@@ -1,9 +1,5 @@
 SET search_path TO pizza_runner;
 
--- Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any relevant ingredients
--- For example: "Meat Lovers: 2xBacon, Beef, ... , Salami"
--- What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
-
 -- What are the standard ingredients for each pizza?
 select 
   pr.pizza_id,
@@ -75,7 +71,30 @@ close get_orders;
 end;
 $$;
 
-
+-- What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
+with orders as (select * from customer_orders c
+join pizza_recipes r
+on c.pizza_id = r.pizza_id
+where c.order_id in (
+	select order_id from runner_orders where cancellation is null
+)),
+ingredients as(
+select unnest(
+    array_cat(
+      array(
+        select unnest(string_to_array(toppings, ',')::int[])
+        except
+        select unnest(string_to_array(exclusions, ',')::int[])
+      ),
+      string_to_array(extras, ',')::int[]
+    )
+) as ingre
+from orders
+)
+select count(ingre),topping_name
+from ingredients join pizza_toppings on ingre = topping_id
+group by topping_name
+order by count desc
 
 select * 
 from customer_orders c
